@@ -1,0 +1,21 @@
+.btn > button {
+   background-color: #ff6600;
+   border-color: #ff6600;
+}
+
+.day-toggle{
+    float: right;
+}
+
+lightning-button{
+    --slds-c-button-brand-color-background: #ff6600;
+    --slds-c-button-brand-color-border:#ff6600;
+    --slds-c-button-brand-color-background-active:#ff6600;
+    --slds-c-button-color-border-active:#ff6600;
+    --slds-c-button-brand-color-background-hover:#E65C00;
+    --slds-c-button-brand-color-border-hover:#E65C00;
+}
+
+.card{
+    padding: 1rem;
+}

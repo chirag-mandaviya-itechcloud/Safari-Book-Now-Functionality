@@ -1,0 +1,42 @@
+<template>
+    <section class="slds-m-around_small">
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+        </template>
+        <template if:false={isLoading}>
+            <div>
+                <lightning-button variant="brand" label="Add" onclick={handleAdd} class="btn" icon-name="utility:add"
+                    disabled={quoteLocked}></lightning-button>
+                <lightning-button variant="brand" label="Add Template" onclick={handleAddTemplate}
+                    icon-name="utility:add" class="slds-m-left_small btn" disabled={quoteLocked}></lightning-button>
+                <lightning-input type="toggle" label="Day-Day View" name="dayView" class="day-toggle"
+                    onchange={handleToggle}></lightning-input>
+            </div>
+            <template if:true={isOpenModal}>
+                <c-add-quote-template record-id={recordId} onclosemodal={handleCloseModal}></c-add-quote-template>
+            </template>
+            <template if:false={isDayView}>
+                <div class="slds-m-vertical_small">
+                    <template for:each={quoteLineItems} for:item="item">
+                        <c-quote_-itinerary-item key={item.Id} id={item.Id} data-id={item.Id}
+                            quote-line-item-id={item.Id} quote-id={recordId} new-card-start-date={newCardStartDate}
+                            quote-locked={quoteLocked} cost-markup-locked={costMarkupLocked}
+                            logistics-locked={logisticsLocked} class="card" onrefresh={refresh}
+                            ondeletecard={deleteCard}></c-quote_-itinerary-item>
+                    </template>
+                </div>
+                <template lwc:if={hasServices}>
+                    <div>
+                        <lightning-button variant="brand" label="Add" onclick={handleAdd} class="btn"
+                            icon-name="utility:add" disabled={quoteLocked}></lightning-button>
+                    </div>
+                </template>
+            </template>
+            <template if:true={isDayView}>
+                <div class="slds-m-vertical_small">
+                    <c-quote_-day-view record-id={recordId}></c-quote_-day-view>
+                </div>
+            </template>
+        </template>
+    </section>
+</template>
