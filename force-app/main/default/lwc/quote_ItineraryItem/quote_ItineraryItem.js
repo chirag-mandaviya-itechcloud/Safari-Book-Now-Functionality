@@ -86,6 +86,8 @@ export default class quote_ItineraryItem extends LightningElement {
     openEmailModal = false;
     supplierToEmailAddress;
 
+    @track isOpenBookNowModal = false;
+
     serviceTypeMetadata;
     get durationLabel() {
         if (this.serviceTypeMetadata) {
@@ -283,6 +285,32 @@ export default class quote_ItineraryItem extends LightningElement {
             this.updateLogisticsDisabled = false;
         }
     }
+
+    handleBookNow(event) {
+        this.isOpenBookNowModal = true;
+        console.log('handleBookNow-----------');
+        console.log('selectedSuppiler > externalId -> ' + this.selectedSuppiler["externalId"]);
+        console.log('startDate -> ' + this.startDate);
+        console.log('displayDuration -> ' + this.displayDuration);
+        console.log('selectedServiceType -> ' + this.selectedServiceType);
+        console.log('Room Quantity -> ' + this.quantity);
+
+        // payload = [{
+        //     Opt: this.selectedSuppiler["externalId"],
+        //     Info: 'GSI',
+        //     DateFrom: this.startDate,
+        //     SCUqty: this.displayDuration,
+        //     ButtonName: this.selectedServiceType || 'Accommodation',
+        //     RoomConfigs: roomConfigs,
+        //     MaximumOptions: 30
+        // }];
+
+    }
+
+    handleCancelBookNow() {
+        this.isOpenBookNowModal = false;
+    }
+
     prePopulateCard() {
         GetQuoteLineItemDetail({ quoteLineItemId: this.quoteLineItemId })
             .then(result => {
@@ -509,7 +537,7 @@ export default class quote_ItineraryItem extends LightningElement {
             if (serviceLocation) {
                 this.selectedServiceLocation = serviceLocation;
             }
-        }).catch(error => { //console.log(JSON.parse(JSON.stringify(error))); 
+        }).catch(error => { //console.log(JSON.parse(JSON.stringify(error)));
         })
     }
 
@@ -547,7 +575,7 @@ export default class quote_ItineraryItem extends LightningElement {
         if (this.selectedSuppiler) {
             GetLocationForSupplier({ supplierIdorCode: this.selectedSuppiler.id, mode: this.mode }).then(result => {
                 this.serviceLocaitonOptions = generateOptionList(result);
-            }).catch(error => { //console.log(JSON.parse(JSON.stringify(error))); 
+            }).catch(error => { //console.log(JSON.parse(JSON.stringify(error)));
             })
         } else {
             GetLocations({

@@ -24,6 +24,8 @@
                 <div class="right">
                     <!-- <lightning-button-icon icon-name="utility:edit_form" size="large" class="slds-m-around_x-small"
                         variant="bare"></lightning-button-icon> -->
+                    <lightning-button variant="brand" label="Book Now" onclick={handleBookNow}
+                        class="slds-m-right_x-small"></lightning-button>
                     <lightning-button-icon icon-name="utility:email" size="large" class="slds-m-around_x-small"
                         variant="bare" onclick={sendEmail}></lightning-button-icon>
                     <lightning-button-icon icon-name="utility:edit" size="large" class="slds-m-around_x-small"
@@ -674,6 +676,53 @@
             </template>
 
         </section>
+        <!-- Book Now Modal -->
+        <template if:true={isOpenBookNowModal}>
+            <div tabindex="-1" class="modal-glass slds-backdrop fadein slds-fade-in-open"
+                data-aura-rendered-by="49:4553;a" style="opacity: 0.8;"></div>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-book-now" aria-modal="true"
+                aria-describedby="modal-content-book-now" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- modal header start -->
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={handleCancelBookNow}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                                size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-book-now" class="slds-text-heading_medium slds-hyphenate">
+                            Confirm Booking
+                        </h2>
+                    </header>
+
+                    <!-- modal body start -->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-book-now">
+                        <div class="slds-text-align_center">
+                            <lightning-icon icon-name="action:question_post_action" size="large"
+                                class="slds-m-bottom_medium"></lightning-icon>
+                            <p class="slds-text-heading_small slds-m-bottom_small">
+                                Are you sure you want to book this service?
+                            </p>
+                            <p class="slds-text-body_regular">
+                                Service: <strong>{changeServiceDisplayName}</strong><br />
+                                Supplier: <strong>{changeSupplierDisplayName}</strong><br />
+                                Date: <strong>{startDate}</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- modal footer start-->
+                    <!-- <footer class="slds-modal__footer">
+                        <lightning-button variant="neutral" label="Cancel"
+                            onclick={handleCancelBookNow}></lightning-button>
+                        <lightning-button variant="brand" label="Confirm Booking" onclick={handleConfirmBookNow}
+                            class="slds-m-left_x-small"></lightning-button>
+                    </footer> -->
+                </div>
+            </section>
+        </template>
+
         <template if:true={isOpenModal}>
             <div tabindex="-1" class="modal-glass slds-backdrop fadein slds-fade-in-open"
                 data-aura-rendered-by="49:4553;a" style="opacity: 0.8;"></div>
