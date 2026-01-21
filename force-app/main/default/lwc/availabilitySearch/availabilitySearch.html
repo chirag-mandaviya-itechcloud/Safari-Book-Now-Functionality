@@ -1,0 +1,375 @@
+<template>
+    <lightning-card>
+        <div class="form-section">
+            <div class="header">
+                <h2>{headerText}</h2>
+            </div>
+
+            <div class="slds-p-horizontal_medium slds-p-vertical_small">
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <lightning-combobox name="serviceType" label="Service Type" value={filters.serviceType}
+                            options={serviceTypeOptions} onchange={handleInput} required>
+                        </lightning-combobox>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <lightning-input type="date" name="startDate" label="Start Date" value={filters.startDate}
+                            placeholder="Select start date" onchange={handleInput} required>
+                        </lightning-input>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <lightning-combobox name="durationNights" label="Duration (Nights)"
+                            value={filters.durationNights} options={durationOptions} onchange={handleInput} required>
+                        </lightning-combobox>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <lightning-input type="date" name="endDate" label="End Date" value={filters.endDate} disabled>
+                        </lightning-input>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <lightning-combobox name="quantityRooms" label="Quantity (Rooms)" value={filters.quantityRooms}
+                            options={roomQtyOptions} onchange={handleInput} required>
+                        </lightning-combobox>
+                    </div>
+
+                    <template if:true={loadLoc}>
+                        <div class="slds-col slds-size_1-of-2 slds-large-size_2-of-5">
+                            <c-multi-select-picklist label="Location(s)" required="true" show-pills="true"
+                                onvaluechange={handleChangeLocation} role="cm-picklist"></c-multi-select-picklist>
+                        </div>
+                    </template>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <c-multi-select-picklist label="Star Rating(s)" show-pills="true"
+                            onvaluechange={handleChangeStarRating} role="star-picklist"></c-multi-select-picklist>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <c-multi-select-picklist label="Supplier Status(es)" show-pills="true"
+                            onvaluechange={handleChangeSupplierStatus} role="status-picklist">
+                        </c-multi-select-picklist>
+                    </div>
+
+                    <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-5">
+                        <lightning-combobox name="liveAvailability" label="Live Availability"
+                            value={filters.liveAvailability} options={liveAvailOptions} onchange={handleInput}>
+                        </lightning-combobox>
+                    </div>
+
+                    <div class="slds-col slds-size_2-of-5">
+                        <c-multi-select-picklist label="Supplier(s)" show-pills="true"
+                            onvaluechange={handleChangeSupplier} role="cms-picklist"></c-multi-select-picklist>
+                    </div>
+
+                    <template if:true={loadAttractions}>
+                        <div class="slds-col slds-size_1-of-2 slds-large-size_2-of-5">
+                            <c-multi-select-picklist label="Attractions" show-pills="true"
+                                onvaluechange={handleChangeAttractions} role="attractions-picklist">
+                            </c-multi-select-picklist>
+                        </div>
+                    </template>
+
+                    <div class="slds-col slds-size_1-of-5 margin-search">
+                        <button class="search-btn" onclick={handleSearch}>Search</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="roomcfg-section">
+                <template if:true={validationError}>
+                    <div class="room-error">{validationError}</div>
+                </template>
+
+                <div class="slds-scrollable_x">
+                    <table
+                        class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered roomcfg-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 8rem;">
+                                    <div class="slds-truncate">Rooms</div>
+                                </th>
+                                <th style="width: 14rem;">
+                                    <div class="slds-truncate">Room Type</div>
+                                </th>
+                                <th style="width: 10rem;">
+                                    <div class="slds-truncate">Adult</div>
+                                </th>
+                                <th style="width: 10rem;">
+                                    <div class="slds-truncate">Child</div>
+                                </th>
+                                <th style="width: 10rem;">
+                                    <div class="slds-truncate">Infant</div>
+                                </th>
+                                <th style="width: 8rem;">
+                                    <div class="slds-truncate">Passengers</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={roomConfigs} for:item="rc" for:index="i">
+                                <tr key={rc.id}>
+                                    <td>
+                                        <div class="slds-truncate">Room {rc.id}</div>
+                                    </td>
+
+                                    <td>
+                                        <lightning-combobox name="roomType" value={rc.roomType}
+                                            options={roomTypeOptions} variant="label-hidden" data-index={i}
+                                            onchange={handleRoomChange}>
+                                        </lightning-combobox>
+                                    </td>
+
+                                    <td>
+                                        <lightning-input type="number" name="adults" min="0" step="1" value={rc.adults}
+                                            variant="label-hidden" data-index={i} onchange={handleRoomChange}>
+                                        </lightning-input>
+                                    </td>
+
+                                    <td>
+                                        <lightning-input type="number" name="children" min="0" step="1"
+                                            value={rc.children} variant="label-hidden" data-index={i}
+                                            onchange={handleRoomChange}>
+                                        </lightning-input>
+                                    </td>
+
+                                    <td>
+                                        <lightning-input type="number" name="infants" min="0" step="1"
+                                            value={rc.infants} variant="label-hidden" data-index={i}
+                                            onchange={handleRoomChange}>
+                                        </lightning-input>
+                                    </td>
+
+                                    <td>
+                                        <div class="slds-truncate slds-text-align_center">{rc.passengers}</div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <template if:true={loading}>
+            <lightning-spinner alternative-text="Loading" size="medium" class="spinner-class" variant="brand">
+            </lightning-spinner>
+        </template>
+
+        <template if:true={dateSections.length}>
+            <div class="result-section">
+                <div class="results-header">
+                    <p class="result-hadding">Hotels</p>
+                    <div class="bulk-toolbar">
+                        <span class="bulk-pill">{selectedCount} selected</span>
+                        <button class="save-btn" onclick={handleSaveSelected} disabled={disableSave}>Save</button>
+                        <template if:true={hasSelection}>
+                            <button class="clear-btn" onclick={handleClearSelection}>Clear</button>
+                        </template>
+                    </div>
+                </div>
+
+                <template for:each={dateSections} for:item="sec">
+                    <section key={sec.key} class="date-section">
+                        <div class="date-section__header">
+                            <span class="date-section__days">{sec.dayLabel}</span>
+
+                            <template if:true={sec.dayLabel}>
+                                <span class="date-section__sep">•</span>
+                                <span class="date-section__title">{sec.title}</span>
+                            </template>
+
+                            <template if:true={sec.destLabel}>
+                                <span class="date-section__sep">•</span>
+                                <span class="date-section__dest" title={sec.destLabel}>{sec.destLabel}</span>
+                            </template>
+                        </div>
+
+                        <template for:each={sec.groups} for:item="grp">
+                            <div key={grp.groupKey} class="group-block">
+                                <div class="supplier-header-row" data-crm={grp.crmCode} data-groupkey={grp.groupKey}
+                                    onfocusin={activateHeaderZ} onfocusout={deactivateHeaderZ}>
+                                    <div class="supplier-cell supplier-name">
+                                        <strong>{grp.supplier}</strong>
+                                        <template if:true={grp.ferretDestinationLocation}>
+                                            <div class="crm-sub">{grp.ferretDestinationLocation}</div>
+                                        </template>
+                                    </div>
+
+                                    <div class="supplier-cell date-cell">
+                                        <span class="header-suffix">Start Date</span>
+                                        <lightning-input type="date" name="startDate" value={grp.uiStartDate}
+                                            data-crm={grp.crmCode} onchange={handleGroupHeaderChange}
+                                            data-groupkey={grp.groupKey} oninput={handleGroupHeaderInput}
+                                            class="header-input" variant="label-hidden">
+                                        </lightning-input>
+                                    </div>
+
+                                    <div class="supplier-cell date-cell">
+                                        <span class="header-suffix">End Date</span>
+                                        <lightning-input type="date" value={grp.uiEndDate} disabled class="header-input"
+                                            variant="label-hidden">
+                                        </lightning-input>
+                                    </div>
+
+                                    <div class="supplier-cell integer-cell">
+                                        <span class="header-suffix">Nights</span>
+                                        <lightning-input type="number" name="durationNights"
+                                            value={grp.uiDurationNights} min="1" max="30" step="1"
+                                            data-crm={grp.crmCode} onchange={handleGroupHeaderChange}
+                                            data-groupkey={grp.groupKey} oninput={handleGroupHeaderInput}
+                                            class="header-input" variant="label-hidden">
+                                        </lightning-input>
+                                    </div>
+
+                                    <div class="supplier-cell integer-cell">
+                                        <span class="header-suffix">Rooms</span>
+                                        <lightning-input type="number" name="quantityRooms" value={grp.uiQuantityRooms}
+                                            min="1" max="9" step="1" data-crm={grp.crmCode} data-groupkey={grp.groupKey}
+                                            oninput={handleGroupHeaderInput} onchange={handleGroupHeaderChange}
+                                            class="header-input" variant="label-hidden">
+                                        </lightning-input>
+                                    </div>
+
+                                    <div class="supplier-cell hotelname-cell" title={grp.ferretDestinationLocation}>
+                                        <span class="location-hover" onmouseover={activateLocationTooltip}
+                                            onmouseout={deactivateLocationTooltip}
+                                            data-crm={grp.crmCode}>{grp.firstLocality}</span>
+                                        <template if:true={grp.showLocationTooltip}>
+                                            <div class="custom-tooltip">
+                                                {grp.ferretDestinationLocation}
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <div class="supplier-cell">
+                                        <span class="header-suffix">Star Rating</span>
+                                        <lightning-combobox name="starRating" value={grp.uiStarRating}
+                                            options={starHeaderOptions} placeholder="Any" data-crm={grp.crmCode}
+                                            data-groupkey={grp.groupKey} onchange={handleGroupHeaderChange}
+                                            dropdown-alignment="left" class="header-combobox">
+                                        </lightning-combobox>
+                                    </div>
+
+                                    <div class="supplier-cell search-cell">
+                                        <button class="search-btn header-search-btn" onclick={handleGroupSearch}
+                                            data-crm={grp.crmCode} disabled={grp.loading} data-groupkey={grp.groupKey}>
+                                            <template if:true={grp.loading}>Searching…</template>
+                                            <template if:false={grp.loading}>Search</template>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="slds-scrollable_x">
+                                    <table
+                                        class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Service</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Rate Category</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Rate Description</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Child Policy</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">In Cancellation</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Nett</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Sell</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Booking Status</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate">Add</div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template for:each={grp.items} for:item="row">
+                                                <tr key={row.id}>
+                                                    <td data-label="Service">
+                                                        <div class="slds-truncate" title={row.service}>{row.service}
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Rate Category">
+                                                        <div class="slds-truncate" title={row.rateCategory}>
+                                                            {row.rateCategory}</div>
+                                                    </td>
+                                                    <td data-label="Rate Description">
+                                                        <div class="slds-truncate" title={row.rateDescription}>
+                                                            {row.rateDescription}
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="Child Policy">
+                                                        <div class="slds-truncate" title={row.childPolicy}>
+                                                            {row.childPolicy}
+                                                        </div>
+                                                    </td>
+                                                    <td data-label="In Cancellation">
+                                                        <div class="slds-truncate">{row.inCancellation}</div>
+                                                    </td>
+                                                    <td data-label="Nett">
+                                                        <div class="slds-truncate">{row.nett}</div>
+                                                    </td>
+                                                    <td data-label="Sell">
+                                                        <div class="slds-truncate">{row.sell}</div>
+                                                    </td>
+                                                    <td data-label="Status">
+                                                        <div class={row.statusClass}>{row.status}</div>
+                                                    </td>
+                                                    <td data-label="Select" class="select-cell">
+                                                        <lightning-input type="checkbox" variant="label-hidden"
+                                                            data-row-key={row.uniqueKey} checked={row.isSelected}
+                                                            disabled={row.addDisabled}
+                                                            onchange={handleRowCheckboxChange}>
+                                                        </lightning-input>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                            <template if:false={grp.items.length}>
+                                                <tr>
+                                                    <td colspan="9" class="slds-text-align_center slds-text-color_weak">
+                                                        No options available
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </template>
+                    </section>
+                </template>
+            </div>
+        </template>
+
+        <template if:true={showNoHotels}>
+            <div class="result-section">
+                <div class="no-results">
+                    <lightning-icon icon-name="utility:search" size="small" class="no-results-icon"></lightning-icon>
+                    <div>
+                        <div class="no-results-title">No hotels found please.</div>
+                        <div class="no-results-sub">Try different dates, rooms, location, or star rating.</div>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template if:true={error}>
+            <div class="slds-p-around_small slds-text-color_error error-section">{error}</div>
+        </template>
+    </lightning-card>
+</template>
