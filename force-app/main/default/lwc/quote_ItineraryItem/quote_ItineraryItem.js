@@ -29,6 +29,8 @@ import GetREEmailAddresses from '@salesforce/apex/QuoteLineItemController.getREE
 import GetSupplierServiceNotes from '@salesforce/apex/QuoteLineItemController.getSupplierServiceNotes';
 import UpdateQuoteLineItemWithRateStatus from '@salesforce/apex/QuoteLineItemController.updateQuoteLineItemWithRateStatus';
 import DeleteExistingQuoteLineItems from '@salesforce/apex/QuoteLineItemController.deleteExistingQuoteLineItems';
+import GetQLIConfigurations from '@salesforce/apex/QuoteLineItemController.getQLIConfigurations';
+import getOptions from '@salesforce/apex/AvailabilitySearchController.getOptions';
 
 export default class quote_ItineraryItem extends LightningElement {
 
@@ -286,7 +288,7 @@ export default class quote_ItineraryItem extends LightningElement {
         }
     }
 
-    handleBookNow(event) {
+    async handleBookNow(event) {
         this.isOpenBookNowModal = true;
         console.log('handleBookNow-----------');
         console.log('selectedSuppiler > externalId -> ' + this.selectedSuppiler["externalId"]);
@@ -294,17 +296,57 @@ export default class quote_ItineraryItem extends LightningElement {
         console.log('displayDuration -> ' + this.displayDuration);
         console.log('selectedServiceType -> ' + this.selectedServiceType);
         console.log('Room Quantity -> ' + this.quantity);
+        console.log('passengers -> ' + this.passengers);
+        const roomConfigs = [];
 
-        // payload = [{
-        //     Opt: this.selectedSuppiler["externalId"],
-        //     Info: 'GSI',
-        //     DateFrom: this.startDate,
-        //     SCUqty: this.displayDuration,
-        //     ButtonName: this.selectedServiceType || 'Accommodation',
-        //     RoomConfigs: roomConfigs,
-        //     MaximumOptions: 30
-        // }];
+        try {
+            const result = await GetQLIConfigurations({ quoteLineItemId: this.quoteLineItemId });
+            console.log("GetQLIConfigurations -> ", result);
 
+            result.forEach(config => {
+                const configObj = {
+                    // roomType: config.serviceSubtype == 'DOUBLE AVAIL' ? 'DB' : 'TW',
+                    Adults: parseInt(config.adults),
+                    Children: parseInt(config.children),
+                    Infants: parseInt(config.infants),
+                    // passengers: parseInt(config.passengers)
+                }
+                roomConfigs.push({ "RoomConfig": configObj });
+            });
+
+            const payload = [{
+                Opt: this.selectedSuppiler["externalId"],
+                Info: 'GSI',
+                DateFrom: this.startDate,
+                SCUqty: this.displayDuration,
+                ButtonName: this.selectedServiceType || 'Accommodation',
+                RoomConfigs: roomConfigs,
+                MaximumOptions: 30
+            }];
+
+            console.log('Search payloads', JSON.stringify({ records: payload }));
+
+            const requestPayload = { records: payload };
+            const body = await getOptions({ reqPayload: JSON.stringify(requestPayload) });
+            const raw = (typeof body === 'string') ? JSON.parse(body) : body;
+
+            console.log('Search response', JSON.stringify(raw));
+
+            const liveAvailabilityResult = raw.result[0];
+
+            console.log('liveAvailabilityResult ->', liveAvailabilityResult);
+            console.log('liveAvailabilityResult ->', JSON.stringify(liveAvailabilityResult));
+
+            if (liveAvailabilityResult.OptStayResults) {
+                //
+            } else {
+                this.showToast('Error', 'No availability found for the selected Hotel.', 'error');
+                this.isOpenBookNowModal = false;
+            }
+
+        } catch (error) {
+            console.log('GetQLIConfigurations>>Error>>>::', JSON.stringify(error));
+        }
     }
 
     handleCancelBookNow() {
