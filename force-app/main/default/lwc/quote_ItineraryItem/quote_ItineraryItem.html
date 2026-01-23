@@ -681,7 +681,7 @@
             <div tabindex="-1" class="modal-glass slds-backdrop fadein slds-fade-in-open"
                 data-aura-rendered-by="49:4553;a" style="opacity: 0.8;"></div>
             <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-book-now" aria-modal="true"
-                aria-describedby="modal-content-book-now" class="slds-modal slds-fade-in-open">
+                aria-describedby="modal-content-book-now" class="slds-modal slds-fade-in-open slds-modal_large">
                 <div class="slds-modal__container">
                     <!-- modal header start -->
                     <header class="slds-modal__header">
@@ -692,33 +692,252 @@
                             <span class="slds-assistive-text">Close</span>
                         </button>
                         <h2 id="modal-heading-book-now" class="slds-text-heading_medium slds-hyphenate">
-                            Confirm Booking
+                            Live Availability - {changeSupplierDisplayName}
                         </h2>
                     </header>
 
                     <!-- modal body start -->
                     <div class="slds-modal__content slds-p-around_medium" id="modal-content-book-now">
-                        <div class="slds-text-align_center">
-                            <lightning-icon icon-name="action:question_post_action" size="large"
-                                class="slds-m-bottom_medium"></lightning-icon>
-                            <p class="slds-text-heading_small slds-m-bottom_small">
-                                Are you sure you want to book this service?
-                            </p>
-                            <p class="slds-text-body_regular">
-                                Service: <strong>{changeServiceDisplayName}</strong><br />
-                                Supplier: <strong>{changeSupplierDisplayName}</strong><br />
-                                Date: <strong>{startDate}</strong>
-                            </p>
-                        </div>
+                        <template if:true={isLoading}>
+                            <div class="slds-text-align_center slds-p-around_large">
+                                <lightning-spinner alternative-text="Loading availability"
+                                    size="medium"></lightning-spinner>
+                                <p class="slds-m-top_small">Checking availability...</p>
+                            </div>
+                        </template>
+
+                        <template if:false={isLoading}>
+                            <!-- Service Details Summary - Compact Version -->
+                            <div class="service-summary-compact slds-m-bottom_small">
+                                <div class="slds-grid slds-gutters_x-small">
+                                    <div class="slds-col">
+                                        <span class="summary-label">Service</span>
+                                        <span class="summary-value">{changeServiceDisplayName}</span>
+                                    </div>
+                                    <div class="slds-col">
+                                        <span class="summary-label">Check-in Date</span>
+                                        <span class="summary-value">{startDate}</span>
+                                    </div>
+                                    <div class="slds-col">
+                                        <span class="summary-label">Duration</span>
+                                        <span class="summary-value">{displayDuration} {durationLabel}</span>
+                                    </div>
+                                    <div class="slds-col">
+                                        <span class="summary-label">Rooms</span>
+                                        <span class="summary-value">{quantity}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- No Options Available Message -->
+                            <template if:true={noOptionsAvailable}>
+                                <div class="slds-text-align_center slds-m-vertical_large">
+                                    <lightning-icon icon-name="utility:warning" size="large"
+                                        alternative-text="No availability" class="slds-m-bottom_small"></lightning-icon>
+                                    <p class="slds-text-heading_small">No availability found</p>
+                                    <p class="slds-text-body_regular slds-text-color_weak slds-m-top_small">
+                                        There are currently no options available for the selected dates and
+                                        configuration.
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- Available Options Section -->
+                            <template if:true={hasAvailableOptions}>
+                                <div class="availability-section">
+                                    <div class="slds-page-header slds-m-bottom_small">
+                                        <div class="slds-media">
+                                            <div class="slds-media__figure">
+                                                <lightning-icon icon-name="utility:check" size="small"
+                                                    variant="success"></lightning-icon>
+                                            </div>
+                                            <div class="slds-media__body">
+                                                <h3 class="slds-page-header__title">Available Options</h3>
+                                                <p class="slds-text-body_small slds-text-color_weak">
+                                                    Instantly bookable options
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-scrollable_y" style="max-height: 300px;">
+                                        <table class="slds-table slds-table_bordered slds-table_fixed-layout">
+                                            <thead>
+                                                <tr class="slds-line-height_reset">
+                                                    <th scope="col" style="width: 25%;">
+                                                        <div class="slds-truncate" title="Rate Name">Rate Name</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Room Type">Room Type</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Total Price">Total Price</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Agent Price">Agent Price</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Commission">Commission</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Action">Action</div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={availableOptions} for:item="option">
+                                                    <tr key={option.id} class="slds-hint-parent">
+                                                        <td data-label="Rate Name">
+                                                            <div class="slds-truncate" title={option.rateName}>
+                                                                <strong>{option.rateName}</strong>
+                                                                <template if:true={option.rateText}>
+                                                                    <br />
+                                                                    <span
+                                                                        class="slds-text-body_small slds-text-color_weak">
+                                                                        {option.rateText}
+                                                                    </span>
+                                                                </template>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Room Type">
+                                                            <div class="slds-truncate" title={option.roomType}>
+                                                                {option.roomType}
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Total Price">
+                                                            <div class="slds-truncate" title={option.formattedPrice}>
+                                                                <strong>{option.formattedPrice}</strong>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Agent Price">
+                                                            <div class="slds-truncate"
+                                                                title={option.formattedAgentPrice}>
+                                                                {option.formattedAgentPrice}
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Commission">
+                                                            <div class="slds-truncate" title={option.commissionPercent}>
+                                                                {option.commissionPercent}%
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Action">
+                                                            <lightning-button variant="brand" label="Book"
+                                                                data-option-id={option.id} data-option-type="available"
+                                                                onclick={handleBookOption}
+                                                                disabled={isBookingInProgress}
+                                                                class="slds-m-left_x-small">
+                                                            </lightning-button>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- On Request Options Section -->
+                            <template if:true={hasOnRequestOptions}>
+                                <div class="availability-section slds-m-top_medium">
+                                    <div class="slds-page-header slds-m-bottom_small">
+                                        <div class="slds-media">
+                                            <div class="slds-media__figure">
+                                                <lightning-icon icon-name="utility:clock" size="small"
+                                                    variant="warning"></lightning-icon>
+                                            </div>
+                                            <div class="slds-media__body">
+                                                <h3 class="slds-page-header__title">On Request Options</h3>
+                                                <p class="slds-text-body_small slds-text-color_weak">
+                                                    Subject to availability confirmation
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-scrollable_y" style="max-height: 300px;">
+                                        <table class="slds-table slds-table_bordered slds-table_fixed-layout">
+                                            <thead>
+                                                <tr class="slds-line-height_reset">
+                                                    <th scope="col" style="width: 25%;">
+                                                        <div class="slds-truncate" title="Rate Name">Rate Name</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Room Type">Room Type</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Total Price">Total Price</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Agent Price">Agent Price</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Commission">Commission</div>
+                                                    </th>
+                                                    <th scope="col" style="width: 15%;">
+                                                        <div class="slds-truncate" title="Action">Action</div>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={onRequestOptions} for:item="option">
+                                                    <tr key={option.id} class="slds-hint-parent">
+                                                        <td data-label="Rate Name">
+                                                            <div class="slds-truncate" title={option.rateName}>
+                                                                <strong>{option.rateName}</strong>
+                                                                <template if:true={option.rateText}>
+                                                                    <br />
+                                                                    <span
+                                                                        class="slds-text-body_small slds-text-color_weak">
+                                                                        {option.rateText}
+                                                                    </span>
+                                                                </template>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Room Type">
+                                                            <div class="slds-truncate" title={option.roomType}>
+                                                                {option.roomType}
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Total Price">
+                                                            <div class="slds-truncate" title={option.formattedPrice}>
+                                                                <strong>{option.formattedPrice}</strong>
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Agent Price">
+                                                            <div class="slds-truncate"
+                                                                title={option.formattedAgentPrice}>
+                                                                {option.formattedAgentPrice}
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Commission">
+                                                            <div class="slds-truncate" title={option.commissionPercent}>
+                                                                {option.commissionPercent}%
+                                                            </div>
+                                                        </td>
+                                                        <td data-label="Action">
+                                                            <lightning-button variant="neutral" label="Request"
+                                                                data-option-id={option.id} data-option-type="onrequest"
+                                                                onclick={handleBookOption}
+                                                                disabled={isBookingInProgress}
+                                                                class="slds-m-left_x-small">
+                                                            </lightning-button>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
                     </div>
 
                     <!-- modal footer start-->
-                    <!-- <footer class="slds-modal__footer">
-                        <lightning-button variant="neutral" label="Cancel"
-                            onclick={handleCancelBookNow}></lightning-button>
-                        <lightning-button variant="brand" label="Confirm Booking" onclick={handleConfirmBookNow}
-                            class="slds-m-left_x-small"></lightning-button>
-                    </footer> -->
+                    <footer class="slds-modal__footer">
+                        <lightning-button variant="neutral" label="Close" onclick={handleCancelBookNow}
+                            disabled={isBookingInProgress}>
+                        </lightning-button>
+                    </footer>
                 </div>
             </section>
         </template>

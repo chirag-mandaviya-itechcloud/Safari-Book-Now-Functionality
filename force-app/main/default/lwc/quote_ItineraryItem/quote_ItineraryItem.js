@@ -89,6 +89,8 @@ export default class quote_ItineraryItem extends LightningElement {
     supplierToEmailAddress;
 
     @track isOpenBookNowModal = false;
+    availableOptions = [];
+    onRequestOptions = [];
 
     serviceTypeMetadata;
     get durationLabel() {
@@ -290,6 +292,9 @@ export default class quote_ItineraryItem extends LightningElement {
 
     async handleBookNow(event) {
         this.isOpenBookNowModal = true;
+        this.isLoading = true;
+        this.availableOptions = [];
+        this.onRequestOptions = [];
         console.log('handleBookNow-----------');
         console.log('selectedSuppiler > externalId -> ' + this.selectedSuppiler["externalId"]);
         console.log('startDate -> ' + this.startDate);
@@ -338,7 +343,7 @@ export default class quote_ItineraryItem extends LightningElement {
             console.log('liveAvailabilityResult ->', JSON.stringify(liveAvailabilityResult));
 
             if (liveAvailabilityResult.OptStayResults) {
-                //
+                this.processAvailabilityResults(liveAvailabilityResult);
             } else {
                 this.showToast('Error', 'No availability found for the selected Hotel.', 'error');
                 this.isOpenBookNowModal = false;
@@ -346,11 +351,81 @@ export default class quote_ItineraryItem extends LightningElement {
 
         } catch (error) {
             console.log('GetQLIConfigurations>>Error>>>::', JSON.stringify(error));
+            this.showToast('Error', 'Failed to fetch availability. Please try again.', 'error');
+            this.isOpenBookNowModal = false;
+        } finally {
+            this.isLoading = false;
         }
+    }
+
+    processAvailabilityResults(result) {
+        try {
+            const stayResults = Array.isArray(result.OptStayResults) ? result.OptStayResults : [result.OptStayResults];
+            console.log('stayResults ->', JSON.stringify(stayResults));
+
+            stayResults.forEach((option, index) => {
+                const processedOption = {
+                    id: index + 1,
+                    rateName: option.RateName || 'Standard Rate',
+                    rateText: option.RateText || '',
+                    rateId: option.RateId || '',
+                    availability: option.Availability || 'RQ',
+                    currency: option.Currency || 'ZAR',
+                    totalPrice: option.TotalPrice || 0,
+                    formattedPrice: this.formatPrice(option.TotalPrice, option.Currency),
+                    agentPrice: option.AgentPrice || 0,
+                    formattedAgentPrice: this.formatPrice(option.AgentPrice, option.Currency),
+                    // commissionPercent: option.CommissionPercent || '0.00',
+                    roomType: option.RoomList?.RoomType || 'N/A',
+                    priceCode: option.PriceCode || '',
+                    cancelHours: option.CancelHours || '0',
+                    // cancelPolicies: this.processCancelPolicies(option.CancelPolicies),
+                    periodValueAdds: option.PeriodValueAdds,
+                    rawData: option
+                };
+
+                if (option.Availability === 'OK') {
+                    this.availableOptions.push(processedOption);
+                } else {
+                    this.onRequestOptions.push(processedOption);
+                }
+            });
+
+            console.log('Available Options:', this.availableOptions);
+            console.log('On Request Options:', this.onRequestOptions);
+        } catch (error) {
+            console.log('processAvailabilityResults>>Error>>>::', JSON.stringify(error));
+            this.showToast('Error', 'Error processing availability results.', 'error');
+        }
+    }
+
+    formatPrice(amount, currency) {
+        if (!amount) return '0.00';
+        const numAmount = parseFloat(amount) / 100;
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: currency || 'ZAR'
+        }).format(numAmount);
     }
 
     handleCancelBookNow() {
         this.isOpenBookNowModal = false;
+        this.availableOptions = [];
+        this.onRequestOptions = [];
+        this.selectedBookingOption = null;
+    }
+
+    get hasAvailableOptions() {
+        return this.availableOptions && this.availableOptions.length > 0;
+        // return true;
+    }
+
+    get hasOnRequestOptions() {
+        return this.onRequestOptions && this.onRequestOptions.length > 0;
+    }
+
+    get noOptionsAvailable() {
+        return !this.hasAvailableOptions && !this.hasOnRequestOptions;
     }
 
     prePopulateCard() {

@@ -7,7 +7,7 @@
 .item-header{
     background-color: #E5E2E2;
     padding: 10px;
-    
+
     border-bottom: 1px solid #ff6600;
 }
 
@@ -57,7 +57,7 @@
     border-bottom: 1px solid #DDDBDA !important;
 }
 
-.slds-accordion__summary-heading{   
+.slds-accordion__summary-heading{
      font-size: 1.4em;
 }
 
@@ -84,7 +84,7 @@ th, td {
 }
 
 button.slds-button.slds-button_icon.slds-button_icon-bare {
-    color: #374850 !important; 
+    color: #374850 !important;
 }
 
 
@@ -167,4 +167,179 @@ lightning-button{
     flex-direction: row-reverse !important;
     justify-content: space-between !important;
     background-color: #F5F5F5 !important;
+}
+
+/* Book Now Modal Styles */
+.slds-modal_large .slds-modal__container {
+    max-width: 90%;
+    width: 1200px;
+}
+
+/* Compact Service Summary */
+.service-summary-compact {
+    background-color: #F3F2F2;
+    border-left: 3px solid #ff6600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+}
+
+.service-summary-compact .summary-label {
+    font-size: 0.75rem;
+    color: #706E6B;
+    margin-right: 0.5rem;
+}
+
+.service-summary-compact .summary-value {
+    font-weight: 600;
+    color: #080707;
+    font-size: 0.875rem;
+}
+
+.availability-section {
+    border: 1px solid #DDDBDA;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    background-color: #FAFAF9;
+}
+
+.availability-section .slds-page-header {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.availability-section .slds-page-header__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #080707;
+}
+
+.availability-section table {
+    background-color: white;
+}
+
+.availability-section thead {
+    background-color: #F3F2F2;
+}
+
+.availability-section tbody tr:hover {
+    background-color: #F3F2F2;
+}
+
+.availability-section tbody td {
+    vertical-align: middle;
+}
+
+/* Rate name column styling */
+.availability-section tbody td[data-label="Rate Name"] strong {
+    color: #080707;
+}
+
+.availability-section tbody td[data-label="Rate Name"] .slds-text-body_small {
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Price column styling */
+.availability-section tbody td[data-label="Total Price"] strong,
+.availability-section tbody td[data-label="Agent Price"] strong {
+    color: #ff6600;
+    font-size: 1.1rem;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge--available {
+    background-color: #04844B;
+    color: white;
+}
+
+.status-badge--onrequest {
+    background-color: #FFB75D;
+    color: #080707;
+}
+
+/* Scrollable table container */
+.slds-scrollable_y {
+    overflow-y: auto;
+    border: 1px solid #DDDBDA;
+    border-radius: 0.25rem;
+}
+
+.slds-scrollable_y::-webkit-scrollbar {
+    width: 8px;
+}
+
+.slds-scrollable_y::-webkit-scrollbar-track {
+    background: #F3F2F2;
+}
+
+.slds-scrollable_y::-webkit-scrollbar-thumb {
+    background: #C9C7C5;
+    border-radius: 4px;
+}
+
+.slds-scrollable_y::-webkit-scrollbar-thumb:hover {
+    background: #AEACAB;
+}
+
+/* Book button styling */
+.availability-section lightning-button {
+    --slds-c-button-brand-color-background: #ff6600;
+    --slds-c-button-brand-color-border: #ff6600;
+    --slds-c-button-brand-color-background-active: #ff6600;
+    --slds-c-button-color-border-active: #ff6600;
+    --slds-c-button-brand-color-background-hover: #E65C00;
+    --slds-c-button-brand-color-border-hover: #E65C00;
+}
+
+/* Service summary box */
+.slds-modal__content .slds-box {
+    background-color: #F3F2F2;
+    border: 1px solid #DDDBDA;
+}
+
+.slds-modal__content .slds-box p {
+    margin-bottom: 0.25rem;
+}
+
+.slds-modal__content .slds-box strong {
+    color: #080707;
+}
+
+/* Loading state */
+.slds-modal__content .slds-text-align_center {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* No results message */
+.slds-modal__content .slds-m-vertical_large {
+    padding: 3rem 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .slds-modal_large .slds-modal__container {
+        max-width: 95%;
+    }
+
+    .availability-section table {
+        font-size: 0.875rem;
+    }
+
+    .availability-section .slds-scrollable_y {
+        max-height: 250px !important;
+    }
 }
