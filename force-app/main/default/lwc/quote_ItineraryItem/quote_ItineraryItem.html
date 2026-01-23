@@ -822,8 +822,8 @@
                                                         </td>
                                                         <td data-label="Action">
                                                             <lightning-button variant="brand" label="Book"
-                                                                data-option-id={option.id} data-option-type="available"
-                                                                onclick={handleBookOption}
+                                                                data-option-opt={option.opt}
+                                                                data-option-type="available" onclick={handleBookOption}
                                                                 disabled={isBookingInProgress}
                                                                 class="slds-m-left_x-small">
                                                             </lightning-button>
@@ -858,22 +858,22 @@
                                         <table class="slds-table slds-table_bordered slds-table_fixed-layout">
                                             <thead>
                                                 <tr class="slds-line-height_reset">
-                                                    <th scope="col" style="width: 25%;">
+                                                    <th scope="col" style="width: 30%;">
                                                         <div class="slds-truncate" title="Rate Name">Rate Name</div>
                                                     </th>
-                                                    <th scope="col" style="width: 15%;">
+                                                    <th scope="col" style="width: 18%;">
                                                         <div class="slds-truncate" title="Room Type">Room Type</div>
                                                     </th>
-                                                    <th scope="col" style="width: 15%;">
+                                                    <th scope="col" style="width: 18%;">
                                                         <div class="slds-truncate" title="Total Price">Total Price</div>
                                                     </th>
-                                                    <th scope="col" style="width: 15%;">
+                                                    <th scope="col" style="width: 18%;">
                                                         <div class="slds-truncate" title="Agent Price">Agent Price</div>
                                                     </th>
-                                                    <th scope="col" style="width: 15%;">
+                                                    <!-- <th scope="col" style="width: 15%;">
                                                         <div class="slds-truncate" title="Commission">Commission</div>
-                                                    </th>
-                                                    <th scope="col" style="width: 15%;">
+                                                    </th> -->
+                                                    <th scope="col" style="width: 16%;">
                                                         <div class="slds-truncate" title="Action">Action</div>
                                                     </th>
                                                 </tr>
@@ -909,15 +909,15 @@
                                                                 {option.formattedAgentPrice}
                                                             </div>
                                                         </td>
-                                                        <td data-label="Commission">
+                                                        <!-- <td data-label="Commission">
                                                             <div class="slds-truncate" title={option.commissionPercent}>
                                                                 {option.commissionPercent}%
                                                             </div>
-                                                        </td>
+                                                        </td> -->
                                                         <td data-label="Action">
                                                             <lightning-button variant="neutral" label="Request"
-                                                                data-option-id={option.id} data-option-type="onrequest"
-                                                                onclick={handleBookOption}
+                                                                data-option-opt={option.opt}
+                                                                data-option-type="onrequest" onclick={handleBookOption}
                                                                 disabled={isBookingInProgress}
                                                                 class="slds-m-left_x-small">
                                                             </lightning-button>

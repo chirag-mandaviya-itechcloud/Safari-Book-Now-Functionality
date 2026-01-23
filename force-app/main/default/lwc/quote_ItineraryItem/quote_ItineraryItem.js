@@ -301,7 +301,7 @@ export default class quote_ItineraryItem extends LightningElement {
         console.log('displayDuration -> ' + this.displayDuration);
         console.log('selectedServiceType -> ' + this.selectedServiceType);
         console.log('Room Quantity -> ' + this.quantity);
-        console.log('passengers -> ' + this.passengers);
+        console.log('passengers -> ' + JSON.stringify(this.passengers));
         const roomConfigs = [];
 
         try {
@@ -362,6 +362,7 @@ export default class quote_ItineraryItem extends LightningElement {
         try {
             const stayResults = Array.isArray(result.OptStayResults) ? result.OptStayResults : [result.OptStayResults];
             console.log('stayResults ->', JSON.stringify(stayResults));
+            const opt = result.Opt;
 
             stayResults.forEach((option, index) => {
                 const processedOption = {
@@ -381,6 +382,7 @@ export default class quote_ItineraryItem extends LightningElement {
                     cancelHours: option.CancelHours || '0',
                     // cancelPolicies: this.processCancelPolicies(option.CancelPolicies),
                     periodValueAdds: option.PeriodValueAdds,
+                    opt: opt,
                     rawData: option
                 };
 
@@ -391,8 +393,8 @@ export default class quote_ItineraryItem extends LightningElement {
                 }
             });
 
-            console.log('Available Options:', this.availableOptions);
-            console.log('On Request Options:', this.onRequestOptions);
+            console.log('Available Options:', JSON.stringify(this.availableOptions));
+            console.log('On Request Options:', JSON.stringify(this.onRequestOptions));
         } catch (error) {
             console.log('processAvailabilityResults>>Error>>>::', JSON.stringify(error));
             this.showToast('Error', 'Error processing availability results.', 'error');
@@ -406,6 +408,179 @@ export default class quote_ItineraryItem extends LightningElement {
             style: 'currency',
             currency: currency || 'ZAR'
         }).format(numAmount);
+    }
+
+    async handleBookOption(event) {
+        try {
+            const optionType = event.target.dataset.optionType;
+            const optionOpt = event.target.dataset.optionOpt;
+            console.log('Selected Option Type  ->', optionType);
+            console.log('Selected Option Opt ->', optionOpt);
+
+            if (optionType === 'available') {
+                this.selectedBookingOption = this.availableOptions.find(option => option.opt === optionOpt);
+                console.log('Selected Booking Option:', JSON.stringify(this.selectedBookingOption));
+            } else if (optionType === 'onrequest') {
+                this.selectedBookingOption = this.onRequestOptions.find(option => option.opt === optionOpt);
+                console.log('Selected On Request Option:', JSON.stringify(this.selectedBookingOption));
+            }
+
+            const bookingRoomConfigs = await this.buildBookingRoomConfigs();
+
+            const payload = [{
+                NewBookingInfo: {
+                    Name: '',
+                    QB: 'B'
+                },
+                Opt: this.selectedBookingOption.opt,
+                RateId: this.selectedBookingOption.rateId,
+                DateFrom: this.startDate,
+                RoomConfigs: bookingRoomConfigs,
+                SCUqty: this.displayDuration,
+                Pickup_Date: this.startDate,
+                puTime: this.startTime || "0800",
+                puRemark: `Collection from ${this.startLocation || 'TBD'}`,
+                Dropoff_Date: this.endDate,
+                doTime: this.endTime || "1700",
+                doRemark: `Transfer to ${this.endLocation || 'TBD'}`
+            }]
+
+            console.log('Booking Payload:', JSON.stringify(payload, null, 2));
+
+
+        } catch (error) {
+            console.log('handleBookOption>>Error>>>::', JSON.stringify(error));
+            this.showToast('Error', 'Failed to prepare booking request.', 'error');
+        }
+    }
+
+    async buildBookingRoomConfigs() {
+        const roomConfigs = [];
+
+        try {
+            const adultPassengers = this.passengers.filter(p =>
+                p.Passenger && p.Passenger.PassengerType__c === 'Adult'
+            );
+            const childPassengers = this.passengers.filter(p =>
+                p.Passenger && p.Passenger.PassengerType__c === 'Child'
+            );
+
+            console.log('Adults count:', adultPassengers.length);
+            console.log('Children count:', childPassengers.length);
+
+            const result = await GetQLIConfigurations({ quoteLineItemId: this.quoteLineItemId });
+            console.log("GetQLIConfigurations -> ", result);
+
+            let adultIndex = 0;
+            let childIndex = 0;
+
+            const sortedConfigs = [...result].sort((a, b) =>
+                parseInt(a.order) - parseInt(b.order)
+            );
+
+            sortedConfigs.forEach((config, index) => {
+                const adultsInRoom = parseInt(config.adults) || 0;
+                const childrenInRoom = parseInt(config.children) || 0;
+                const infantsInRoom = parseInt(config.infants) || 0;
+                console.log(`Room ${index + 1}: Adults=${adultsInRoom}, Children=${childrenInRoom}, Infants=${infantsInRoom}`);
+
+                const roomPaxList = [];
+
+                // Add adults for this room
+                for (let i = 0; i < adultsInRoom; i++) {
+                    if (adultIndex < adultPassengers.length) {
+                        const passenger = adultPassengers[adultIndex].Passenger;
+                        roomPaxList.push(this.createPaxDetails(passenger, 'Adult'));
+                        adultIndex++;
+                    }
+                }
+
+                // Add children for this room
+                for (let i = 0; i < childrenInRoom; i++) {
+                    if (childIndex < childPassengers.length) {
+                        const passenger = childPassengers[childIndex].Passenger;
+                        roomPaxList.push(this.createPaxDetails(passenger, 'Child'));
+                        childIndex++;
+                    }
+                }
+
+                // Add infants for this room
+                for (let i = 0; i < infantsInRoom; i++) {
+                    if (childIndex < childPassengers.length) {
+                        const passenger = childPassengers[childIndex].Passenger;
+                        // Check if this is actually an infant (age < 2)
+                        const age = parseInt(passenger.Given_Age__c);
+                        if (age < 2) {
+                            roomPaxList.push(this.createPaxDetails(passenger, 'Infant'));
+                            childIndex++;
+                        }
+                    }
+                }
+
+                const roomConfig = {
+                    RoomType: config.serviceSubtype == 'DOUBLE AVAIL' ? 'DB' : 'TW',
+                    Adults: adultsInRoom,
+                    Children: childrenInRoom,
+                    PaxList: roomPaxList
+                }
+
+                console.log(`Room ${index + 1} Config:`, JSON.stringify(roomConfig));
+                roomConfigs.push({ "RoomConfig": roomConfig });
+            });
+
+            if (adultIndex < adultPassengers.length || childIndex < childPassengers.length) {
+                console.warn(`Warning: Not all passengers assigned. Adults: ${adultIndex}/${adultPassengers.length}, Children: ${childIndex}/${childPassengers.length}`);
+            }
+        } catch (error) {
+            console.log('buildRoomConfigs>>Error:', JSON.stringify(error));
+        }
+
+        return roomConfigs;
+    }
+
+    createPaxDetails(passenger, type) {
+        const fullName = passenger.PassengerName__c;
+        const lastName = passenger.Last_Name__c;
+
+        let firstName = '';
+
+        if (fullName && lastName) {
+            firstName = fullName.replace(lastName, '').trim();
+        } else {
+            const nameParts = fullName.split(' ');
+            firstName = nameParts.slice(0, -1).join(' ');
+        }
+
+        //pending to make in details
+        let title = 'Mr.';
+        if (type === 'Child' || type === 'Infant') {
+            title = 'Miss';
+        } else if (type === 'Adult' && passenger.Gender__c === 'Female') {
+            title = 'Mrs.';
+        } else if (type === 'Adult' && passenger.Gender__c === 'Male') {
+            title = 'Mr.';
+        }
+
+        let paxType = 'A';
+        if (type === 'Child') {
+            const age = parseInt(passenger.Given_Age__c);
+            if (age < 2) {
+                paxType = 'I'; // Infant
+            } else {
+                paxType = 'C'; // Child
+            }
+        } else if (type === 'Infant') {
+            paxType = 'I';
+        }
+
+        return {
+            PaxDetails: {
+                Title: title,
+                Forename: firstName || 'Unknown',
+                Surname: lastName || 'Unknown',
+                PaxType: paxType
+            }
+        }
     }
 
     handleCancelBookNow() {
