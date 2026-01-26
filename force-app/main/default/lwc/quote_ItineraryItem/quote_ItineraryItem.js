@@ -151,6 +151,7 @@ export default class quote_ItineraryItem extends LightningElement {
     ticketClass;
     ticketClassOptions = [];
     luggageAllowance;
+    bookNowModalOpened = false;
 
     get isLogisticsCard() {
         if (this.selectedSuppiler && this.selectedSuppiler.id != "" && this.optDetail != null && this.serviceTypeMetadata != null) {
@@ -292,6 +293,7 @@ export default class quote_ItineraryItem extends LightningElement {
 
     async handleBookNow(event) {
         this.isOpenBookNowModal = true;
+        this.bookNowModalOpened = true;
         this.isLoading = true;
         this.availableOptions = [];
         this.onRequestOptions = [];
@@ -423,6 +425,8 @@ export default class quote_ItineraryItem extends LightningElement {
             } else if (optionType === 'onrequest') {
                 this.selectedBookingOption = this.onRequestOptions.find(option => option.opt === optionOpt);
                 console.log('Selected On Request Option:', JSON.stringify(this.selectedBookingOption));
+                this.openEmailModal = true;
+                this.isOpenBookNowModal = false;
             }
 
             const bookingRoomConfigs = await this.buildBookingRoomConfigs();
@@ -443,10 +447,9 @@ export default class quote_ItineraryItem extends LightningElement {
                 Dropoff_Date: this.endDate,
                 doTime: this.endTime || "1700",
                 doRemark: `Transfer to ${this.endLocation || 'TBD'}`
-            }]
+            }];
 
-            console.log('Booking Payload:', JSON.stringify(payload, null, 2));
-
+            console.log('Booking Payload Stringified:', JSON.stringify({ records: payload }));
 
         } catch (error) {
             console.log('handleBookOption>>Error>>>::', JSON.stringify(error));
@@ -585,6 +588,7 @@ export default class quote_ItineraryItem extends LightningElement {
 
     handleCancelBookNow() {
         this.isOpenBookNowModal = false;
+        this.bookNowModalOpened = false;
         this.availableOptions = [];
         this.onRequestOptions = [];
         this.selectedBookingOption = null;
@@ -1653,6 +1657,9 @@ export default class quote_ItineraryItem extends LightningElement {
     }
     handleCloseModal() {
         this.openEmailModal = false;
+        if (this.bookNowModalOpened === true) {
+            this.isOpenBookNowModal = true;
+        }
     }
 
     toggleShowCardDetail(event) {
