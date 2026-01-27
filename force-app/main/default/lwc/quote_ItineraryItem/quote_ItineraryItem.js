@@ -31,6 +31,8 @@ import UpdateQuoteLineItemWithRateStatus from '@salesforce/apex/QuoteLineItemCon
 import DeleteExistingQuoteLineItems from '@salesforce/apex/QuoteLineItemController.deleteExistingQuoteLineItems';
 import GetQLIConfigurations from '@salesforce/apex/QuoteLineItemController.getQLIConfigurations';
 import getOptions from '@salesforce/apex/AvailabilitySearchController.getOptions';
+import createBooking from '@salesforce/apex/QuoteLineItemController.createBooking';
+import updateLineItem from '@salesforce/apex/QuoteLineItemController.updateLineItem';
 
 export default class quote_ItineraryItem extends LightningElement {
 
@@ -91,6 +93,8 @@ export default class quote_ItineraryItem extends LightningElement {
     @track isOpenBookNowModal = false;
     availableOptions = [];
     onRequestOptions = [];
+    // requesting = false;
+    booking = false;
 
     serviceTypeMetadata;
     get durationLabel() {
@@ -304,6 +308,10 @@ export default class quote_ItineraryItem extends LightningElement {
         console.log('selectedServiceType -> ' + this.selectedServiceType);
         console.log('Room Quantity -> ' + this.quantity);
         console.log('passengers -> ' + JSON.stringify(this.passengers));
+        // console.log("Quote Data -> ", this.quoteData);
+        // console.log("Quote Line Item Detail -> ", this.quoteLineItemDetail);
+        // const nameForPass = this.quoteLineItemDetail.Id + '-' + this.quoteLineItemDetail.Name__c;
+        // console.log("Name -> ", nameForPass);
         const roomConfigs = [];
 
         try {
@@ -420,40 +428,72 @@ export default class quote_ItineraryItem extends LightningElement {
             console.log('Selected Option Opt ->', optionOpt);
 
             if (optionType === 'available') {
-                this.selectedBookingOption = this.availableOptions.find(option => option.opt === optionOpt);
+                this.booking = true;
+                this.selectedBookingOption = this.onRequestOptions.find(option => option.opt === optionOpt);
                 console.log('Selected Booking Option:', JSON.stringify(this.selectedBookingOption));
+                const bookingRoomConfigs = await this.buildBookingRoomConfigs();
+                const nameForPass = this.quoteLineItemDetail.Id + '-' + this.quoteLineItemDetail.Name__c;
+                const payload = [{
+                    NewBookingInfo: {
+                        Name: nameForPass,
+                        QB: 'B'
+                    },
+                    Opt: this.selectedBookingOption.opt,
+                    RateId: this.selectedBookingOption.rateId,
+                    DateFrom: this.startDate,
+                    RoomConfigs: bookingRoomConfigs,
+                    SCUqty: this.displayDuration,
+                    Pickup_Date: this.startDate,
+                    puTime: this.startTime || "0800",
+                    puRemark: `Collection from ${this.startLocation || 'TBD'}`,
+                    Dropoff_Date: this.endDate,
+                    doTime: this.endTime || "1700",
+                    doRemark: `Transfer to ${this.endLocation || 'TBD'}`
+                }];
+                console.log('Booking Payload Stringified:', JSON.stringify({ records: payload }));
+                const bookingResponse = await createBooking({ bookingPayload: JSON.stringify({ records: payload }) });
+
+                console.log('Booking Response:', JSON.parse(bookingResponse));
+                const jsonResponse = (typeof bookingResponse === 'string') ? JSON.parse(bookingResponse) : bookingResponse;
+
+                if (jsonResponse.result.length > 0 && jsonResponse.result[0].Status === 'OK') {
+                    const result = await updateLineItem({
+                        quoteLineItemId: this.quoteLineItemDetail.Id,
+                        bookingId: jsonResponse.result[0].BookingId,
+                        reservationNumber: jsonResponse.result[0].Ref,
+                        serviceLineId: jsonResponse.result[0].ServiceLineId,
+                        sequenceNumber: jsonResponse.result[0].SequenceNumber,
+                        serviceStatus: jsonResponse.result[0].Status === 'OK' ? 'Confirmed' : 'Not Booked'
+                    });
+
+                    if (result === 'Success') {
+                        this.showToast('Success', 'Booking created successfully.', 'success');
+                        this.isOpenBookNowModal = false;
+                        this.bookNowModalOpened = false;
+                    } else {
+                        this.showToast('Info', result, 'info');
+                    }
+                }
             } else if (optionType === 'onrequest') {
                 this.selectedBookingOption = this.onRequestOptions.find(option => option.opt === optionOpt);
                 console.log('Selected On Request Option:', JSON.stringify(this.selectedBookingOption));
                 this.openEmailModal = true;
                 this.isOpenBookNowModal = false;
             }
-
-            const bookingRoomConfigs = await this.buildBookingRoomConfigs();
-
-            const payload = [{
-                NewBookingInfo: {
-                    Name: '',
-                    QB: 'B'
-                },
-                Opt: this.selectedBookingOption.opt,
-                RateId: this.selectedBookingOption.rateId,
-                DateFrom: this.startDate,
-                RoomConfigs: bookingRoomConfigs,
-                SCUqty: this.displayDuration,
-                Pickup_Date: this.startDate,
-                puTime: this.startTime || "0800",
-                puRemark: `Collection from ${this.startLocation || 'TBD'}`,
-                Dropoff_Date: this.endDate,
-                doTime: this.endTime || "1700",
-                doRemark: `Transfer to ${this.endLocation || 'TBD'}`
-            }];
-
-            console.log('Booking Payload Stringified:', JSON.stringify({ records: payload }));
-
         } catch (error) {
             console.log('handleBookOption>>Error>>>::', JSON.stringify(error));
             this.showToast('Error', 'Failed to prepare booking request.', 'error');
+
+        } finally {
+            this.booking = false;
+        }
+    }
+
+    get bookButtonLabel() {
+        if (this.booking) {
+            return 'Booking...';
+        } else {
+            return 'Book Now';
         }
     }
 

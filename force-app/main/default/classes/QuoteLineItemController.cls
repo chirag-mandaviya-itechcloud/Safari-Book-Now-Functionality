@@ -1,5 +1,5 @@
 public class QuoteLineItemController {
-    
+
     private static final String CLASS_NAME = QuoteLineItemController.class.getName();
     private static final String VALID_CHECK_MESSGAE='';
     static QuoteLineItemHelper QLIHelper= new QuoteLineItemHelper();
@@ -10,7 +10,7 @@ public class QuoteLineItemController {
     @AuraEnabled public static List<String> GetServiceTypeForSupplier(String supplierId) {
         return QLIHelper.GetServiceTypeForSupplier(supplierId);
     }
-    
+
     @AuraEnabled public static List<String> getLocations(String selectedServiceType) {
         return QLIHelper.GetLocations(selectedServiceType);
     }
@@ -23,7 +23,7 @@ public class QuoteLineItemController {
 
     @AuraEnabled public static List<ServiceLinePassengerWrapper> GetQuotationPassengers(String quotationId) {
         List<ServiceLinePassengerWrapper> result=new List<ServiceLinePassengerWrapper>();
-        
+
         List<Passenger__c> passengers=QLIHelper.GetQuotationPassengers(quotationId);
         for(Passenger__c p:passengers)
         {
@@ -40,21 +40,21 @@ public class QuoteLineItemController {
     @AuraEnabled public static List<Quote> GetQuoteById(String quoteId) {
         return DAL_Quote.getAllQuoteById(quoteId);
     }
-    
+
     @AuraEnabled
-    public static OPT__c GetOptIdsForServiceLineItem(String selectedServiceType, String selectedLocation, 
+    public static OPT__c GetOptIdsForServiceLineItem(String selectedServiceType, String selectedLocation,
                                                      String selectedSupplierName,String selectedServiceDetailbeforeSplit,
                                                      String selectedServiceCommentsAfterSplit)
     {
-        return DAL_OPT.GetOptIdsForServiceLineItem(selectedServiceType, selectedLocation, 
+        return DAL_OPT.GetOptIdsForServiceLineItem(selectedServiceType, selectedLocation,
                                                    selectedSupplierName,selectedServiceDetailbeforeSplit,
                                                    selectedServiceCommentsAfterSplit);
-        
+
     }
 
     @AuraEnabled
     public static Map<String,String> getCrmCategoryByCrmCode(String crmCode){
-        
+
         Map<String, Map<String,String>> uniqueRecords = getCrmCategoryMapByCrmCodes(new Set<String>{crmCode});
         if(uniqueRecords.containsKey(crmCode)){
             return uniqueRecords.get(crmCode);
@@ -74,15 +74,15 @@ public class QuoteLineItemController {
                                     CRM_Lookup__r.CODE__c,
                                     OPT_Lookup__c,
                                     OPT_Lookup__r.ExternalId__c
-                                    FROM 
+                                    FROM
                                     NTS__c
                                     WHERE
                                     (OPT_Lookup__r.ExternalId__c = :optCode AND (CATEGORY__c = 'OPI' OR CATEGORY__c = 'OPX' OR CATEGORY__c = 'OIN'))
-                                    OR 
+                                    OR
                                     (CRM_Lookup__r.CODE__c = :crmCode AND CATEGORY__c = 'SIN')];
          for(NTS__c nts: ntsOptList)
         {
-            if(!uniqueRecord.containsKey(nts.CATEGORY__c) 
+            if(!uniqueRecord.containsKey(nts.CATEGORY__c)
                && !(uniqueRecord.get(nts.CATEGORY__c) == nts.CATEGORY__c))
             {
                 uniqueRecord.put(nts.CATEGORY__c,nts.MESSAGE_TEXT__c);
@@ -96,19 +96,19 @@ public class QuoteLineItemController {
     public static Map<String, Map<String,String>> getCrmCategoryMapByCrmCodes(Set<String> crmCode){
         Map<String,String> uniqueRecord = new  Map<String,String>();
         Map<String, Map<String,String>> uniqueRecords = null;
-        List<CRM__c> crms = [SELECT 
+        List<CRM__c> crms = [SELECT
                              Id,
-                             CODE__c 
-                             FROM 
+                             CODE__c
+                             FROM
                              CRM__c
-                             WHERE 
+                             WHERE
                              CODE__c IN:crmCode];
         List<Id> crmsIds  = new List<Id>();
         for(CRM__c c:crms)
         {
             crmsIds.add(c.Id);
         }
-        
+
         if(crms != null)
         {
             List<NTS__c> ntsList = [SELECT
@@ -117,19 +117,19 @@ public class QuoteLineItemController {
                                     MESSAGE_TEXT__c,
                                     CRM_Lookup__c,
                                     CRM_Lookup__r.CODE__c
-                                    FROM 
+                                    FROM
                                     NTS__c
                                     WHERE
-                                    CRM_Lookup__c IN:crmsIds 
+                                    CRM_Lookup__c IN:crmsIds
                                     AND
-                                    (CATEGORY__c = 'OPI' 
-                                     OR 
+                                    (CATEGORY__c = 'OPI'
+                                     OR
                                      CATEGORY__c = 'OPX')];
             uniqueRecord = new Map<String,String>();
             uniqueRecords = new  Map<String, Map<String,String>>();
             for(NTS__c nts: ntsList)
             {
-                if(!uniqueRecord.containsKey(nts.CATEGORY__c) 
+                if(!uniqueRecord.containsKey(nts.CATEGORY__c)
                    && !(uniqueRecord.get(nts.CATEGORY__c) == nts.CATEGORY__c))
                 {
                     uniqueRecord.put(nts.CATEGORY__c,nts.MESSAGE_TEXT__c);
@@ -156,25 +156,25 @@ public class QuoteLineItemController {
     @AuraEnabled
     public static Map<String,String> getExtraFieldMap(String sourceObject, String targetObject){
         Map<String,String> targetFieldName = new Map<String,String>();
-       
+
         List<Field_Mapping_For_Rate_Calculation__mdt>
-                             stayMappings = [SELECT 
-                                                    Target_Object__c, 
+                             stayMappings = [SELECT
+                                                    Target_Object__c,
                                                     Target_Field__c,
                                                     Source_Field__c,
                                                     Source_Object__c
                                             FROM
-                                                     Field_Mapping_For_Rate_Calculation__mdt 
-                                           WHERE 
+                                                     Field_Mapping_For_Rate_Calculation__mdt
+                                           WHERE
                                                     Source_Object__c =:sourceObject
-                                               AND 
+                                               AND
                                                     Target_Object__c=:targetObject Order By Target_Field__c];
-        
+
         for(Field_Mapping_For_Rate_Calculation__mdt mapping:stayMappings)
         {
             targetFieldName.put(mapping.Target_Field__c, mapping.Source_Field__c);
         }
-        
+
         return targetFieldName;
     }
 
@@ -189,27 +189,27 @@ public class QuoteLineItemController {
             return sodWithPolicyTypes[0];
         }
         return null;
-        
+
     }
 
     @AuraEnabled
     public static List<String> saveQuoteLineItem(String serviceLineItemName,String selectedServiceType,
-                                                   String selectedLocation,String selectedSupplierName, 
+                                                   String selectedLocation,String selectedSupplierName,
                                                    String selectedSupplierId, String selectedServiceDetail, String selectedServiceDetailDisplayName,
-                                                   String quoteLineItemId, String serviceClientNotes, 
+                                                   String quoteLineItemId, String serviceClientNotes,
                                                    String serviceReservationNumber,
-                                                   String serviceSelectServiceStatus, String serviceExpiryDate, 
+                                                   String serviceSelectServiceStatus, String serviceExpiryDate,
                                                    Boolean overrideDetails, Boolean overridenSupplierPolicy, String[] selectedPassengers,
-                                                   String serviceDate, String numberOfDays,String displayDuration,String quoteId, 
+                                                   String serviceDate, String numberOfDays,String displayDuration,String quoteId,
                                                    QuoteLineItemConfigurationWrapper[] roomConfigurations,
                                                    logisticsWrapper logistics,
                                                    FlightWrapper flightDetail,
                                                    ServiceLineChargeTypeWrapper[] oldChargeTypes,
                                                   Boolean keepRatesOnDateChange, String selectedOPT,
-                                                  String[] addOns, String serviceInclusionNote, String serviceExclusionNote,  
-                                                  String supplierDescription, String serviceDescription) 
+                                                  String[] addOns, String serviceInclusionNote, String serviceExclusionNote,
+                                                  String supplierDescription, String serviceDescription)
     {
-        
+
         System.debug('Inside saveServiceLineItem: oldChargeTypes: '+oldChargeTypes);
 
         System.debug('QuoteLineItemConfigurationWrapper:::'+roomConfigurations);
@@ -224,8 +224,8 @@ public class QuoteLineItemController {
             ErrorMessageList.addAll(errorList);
         }
 
-        
-       
+
+
         //logger.start(CLASS_NAME,'saveServiceLineItem');
         System.debug('serviceDate'+serviceDate);
         String errorMessage ='';
@@ -251,12 +251,12 @@ public class QuoteLineItemController {
                 }
                 if(String.isEmpty(p.PassengerType__c))
                 {
-                    ErrorMessageList.add(system.label.Passenger_Type_Not_Defined + p.PassengerName__c); 
+                    ErrorMessageList.add(system.label.Passenger_Type_Not_Defined + p.PassengerName__c);
                     return ErrorMessageList;
                 }
-                
+
             }
-            
+
             String selectedServiceDetailbeforeSplit = null;
             String selectedServiceCommentsAfterSplit= null;
             if(selectedServiceDetail.contains('||'))
@@ -268,14 +268,14 @@ public class QuoteLineItemController {
             {
                 selectedServiceDetailbeforeSplit = selectedServiceDetail;
             }
-            
+
             optId  = DAL_OPT.getOptByExternalId(selectedOPT);
             system.debug('@@ optId : '+optId);
             if(optId== null)
             {
                 errorMessage = system.label.OPT_Not_Available;
             }
-            
+
             if(!overrideDetails)
             {
                 System.debug('Info'+'AllPassengers sorted');
@@ -283,19 +283,19 @@ public class QuoteLineItemController {
                 string hour = '00';
                 string minute = '00';
                 string second = '00';
-                
-                
+
+
                 String serviceDate1 = serviceDate.substringBefore('-')+'-'+serviceDate.substringAfterLast('-')+'-'+serviceDate.substringBetween('-','-');
                 Date startdate = date.valueOf(serviceDate  + ' ' + hour + ':' + minute + ':' + second);
                 System.debug('Info'+serviceDate);
                 System.debug('Info'+serviceDate1);
                 if(String.isBlank(errorMessage))
-                {  
+                {
                     // if(numberOfDays== null)
                     // {
                     //     numberOfDays ='0';
                     // }
-                    // List<String> CriteriaToSODerrorMessage = validateTheCriteriaToSOD(startdate, Integer.valueof(numberOfDays) 
+                    // List<String> CriteriaToSODerrorMessage = validateTheCriteriaToSOD(startdate, Integer.valueof(numberOfDays)
                     //                                                                  ,allPassengers, adultPassengers ,
                     //                                                                  notAdultPassengers,selectedServiceType,
                     //                                                                  optId,roomConfiguration);
@@ -303,36 +303,36 @@ public class QuoteLineItemController {
                     // if(CriteriaToSODerrorMessage.size() > 0)
                     // {
                     //     //ErrorMessageList.addAll(CriteriaToSODerrorMessage);
-                        
+
                     //     //return ErrorMessageList;
                     //     overrideDetails=true;
                     // }
                 }
-                
+
                 //createQuoteLineItemsIfMissing(startdate, Integer.valueof(numberOfDays), quoteId);
-                
-                // System.debug('Info','validateTheCriteriaToSOD witho Error');   
-                // Boolean checkDurationIsValid = DbQueries.validateDurationIsValid(startdate,Integer.valueof(numberOfDays), 
+
+                // System.debug('Info','validateTheCriteriaToSOD witho Error');
+                // Boolean checkDurationIsValid = DbQueries.validateDurationIsValid(startdate,Integer.valueof(numberOfDays),
                 //                                                                  quoteId,selectedServiceType);
-                
+
                 // if(!checkDurationIsValid)
                 // {
                 //     //errorMessage = System.Label.Duration_Check;
                 //     //ErrorMessageList.add(errorMessage);
-                    
+
                 //     //return ErrorMessageList;
                 //     overrideDetails=true;
                 // }
                 // System.debug('errorMessage',errorMessage);
-            }    
-            
+            }
+
             if(String.isBlank(errorMessage))
             {
                 System.debug('Info'+'Calling Save Method');
-                Set<String> errorMessages =  QLIHelper.saveServiceLineItem(serviceLineItemName, selectedServiceType, 
+                Set<String> errorMessages =  QLIHelper.saveServiceLineItem(serviceLineItemName, selectedServiceType,
                                                                            selectedLocation, selectedSupplierName, selectedSupplierId,
                                                                            selectedServiceDetail, selectedServiceDetailDisplayName, quoteLineItemId,
-                                                                           serviceReservationNumber, 
+                                                                           serviceReservationNumber,
                                                                            serviceSelectServiceStatus,serviceExpiryDate,
                                                                            overrideDetails, overridenSupplierPolicy, selectedPassengers,serviceDate,numberOfDays,displayDuration,
                                                                            quoteId,optId, roomConfigurations,
@@ -342,13 +342,13 @@ public class QuoteLineItemController {
                                                                            supplierDescription,serviceDescription);
                 System.debug('@@errorMessages : '+errorMessages);
                 ErrorMessageList.addAll(errorMessages);
-                
+
             }
             if(overrideDetails==true){
                 ErrorMessageList.add(System.Label.Service_Detail_Override_Message);
             }
             System.debug('ErrorMessageList'+ErrorMessageList);
-            
+
         }
         catch(Exception e){
             System.debug('@@Exception :: '+e.getStackTraceString());
@@ -356,12 +356,12 @@ public class QuoteLineItemController {
         }
         System.debug('@@ErrorMessageList : '+ErrorMessageList);
         return ErrorMessageList;
-        
+
     }
 
     @AuraEnabled
     public static List<String> updateQuoteLineItem(String quoteLineItemId, logisticsWrapper logistics, FlightWrapper flightDetail,
-                                                    String serviceInclusionNote, String serviceExclusionNote,  
+                                                    String serviceInclusionNote, String serviceExclusionNote,
                                                     String supplierDescription, String serviceDescription)
     {
         List<String> ErrorMessageList = new List<String>();
@@ -378,7 +378,7 @@ public class QuoteLineItemController {
     public static List<String> deleteExistingQuoteLineItems(String quoteLineItemId){
         List<String> ErrorMessageList = new List<String>();
 
-        try{        
+        try{
             List<Service_Line_Item_ChargeType__c> chargeTypes = new List<Service_Line_Item_ChargeType__c>();
             List<Quote_Line_Item_Configuration__c> quoteLineItemConfigs = new List<Quote_Line_Item_Configuration__c>();
             List<QuoteLineItemConfigPassengerMapping__c> qLineItemsPassengerMappings = new List<QuoteLineItemConfigPassengerMapping__c>();
@@ -405,7 +405,7 @@ public class QuoteLineItemController {
                 qLIConfigIds.add(qlic.Id);
             }
             qLineItemsPassengerMappings = DAL_QuoteLineItemConfigPassengerMapping.getByParentIds(qLIConfigIds);//[SELECT Id FROM QuoteLineItemConfigPassengerMapping__c WHERE Quote_Line_Item_Configuration__c IN: quoteLineItemConfigs] ;
-            
+
             if(!chargeTypes.isEmpty()){
                 delete chargeTypes;
             }
@@ -425,7 +425,7 @@ public class QuoteLineItemController {
             ErrorMessageList.add(e.getMessage());
         }
         return ErrorMessageList;
-    }   
+    }
 
     @AuraEnabled
     public static CostMarkupMainWrapper getCostMarkups(String QuoteLineItemId){
@@ -449,7 +449,7 @@ public class QuoteLineItemController {
 
     @AuraEnabled public static List<String> getTimeList() {
         List<String> options = new List<String>();
-        
+
         for(Integer hour=0;hour<24;hour++)
         {
             String timeStr ='';
@@ -483,14 +483,14 @@ public class QuoteLineItemController {
         string hour = '00';
         string minute = '00';
         string second = '00';
-        Date sDate = date.valueOf(serviceDate  + ' ' + hour + ':' + minute + ':' + second); 
+        Date sDate = date.valueOf(serviceDate  + ' ' + hour + ':' + minute + ':' + second);
         Integer serviceDuration = Integer.valueOf(duration);
-        return QLIHelper.validateSerivceByDay(opt, serviceType, sDate, serviceDuration);   
+        return QLIHelper.validateSerivceByDay(opt, serviceType, sDate, serviceDuration);
     }
 
     @AuraEnabled
     public static Service_Type_Configuration__mdt getServiceTypeConfigurationByLabel(String serviceType){
-        return QLIHelper.getServiceTypeConfigurationByLabel(serviceType);   
+        return QLIHelper.getServiceTypeConfigurationByLabel(serviceType);
     }
 
     @AuraEnabled
@@ -513,18 +513,18 @@ public class QuoteLineItemController {
     }
 
     /*
-     serviceLineItemName, selectedServiceType, 
+     serviceLineItemName, selectedServiceType,
      selectedLocation, selectedSupplierName, selectedSupplierId,
                                                                            selectedServiceDetail, selectedServiceDetailDisplayName, quoteLineItemId,
-                                                                           serviceReservationNumber, 
+                                                                           serviceReservationNumber,
                                                                            serviceSelectServiceStatus,serviceExpiryDate,
                                                                            overrideDetails,selectedPassengers,serviceDate,numberOfDays,duration,
                                                                            quoteId,optId, roomConfigurations,
                                                                            logistics,
                                                                            flightDetail, oldChargeTypes,addOns,
                                                                            serviceInclusionNote,serviceExclusionNote,
-                                                                           supplierDescription,serviceDescription                                                                      
-    
+                                                                           supplierDescription,serviceDescription
+
     */
     @future
     @AuraEnabled
@@ -553,7 +553,7 @@ public class QuoteLineItemController {
             }
         }*/
 
-        //"Ubuntu For Change" Charity Initiative	
+        //"Ubuntu For Change" Charity Initiative
         if(quote.Currency__c == 'USD'){
             for(OPT__c opt :safari365ServiceListUSD){
                 if(opt.Code__c == 'SACHAU'){
@@ -610,7 +610,7 @@ public class QuoteLineItemController {
         List<String> addOns =  new List<String>();
         /* Service - "Ubuntu For Change" Charity Initiative */
         if(charityService != null){
-           
+
             CRM__c crmRecord = quote.Currency__c == 'ZAR' ? safari365 : safari365USD;
             errorMessages = saveQuoteLineItem(crmRecord.Name__c, charityService.SRV_Name__c, charityService.LOC_Name__c, crmRecord.NAME__c,
             crmRecord.Id, charityService.Description__c, charityService.Description__c,
@@ -630,9 +630,9 @@ public class QuoteLineItemController {
                                                             false,false,null,String.valueOf(quote.TravelStartDate__c),'1','0',quote.Id,
                                                             serviceConfigList,null,null,null,false,photobookService.ExternalId__c,
                                                             addOns,null,null,null,null);
-        }        
+        }
     }
-    
+
     @AuraEnabled
     public static List<String> updateQuoteLineItemWithRateStatus(String quoteLineItemId, String rateStatus){
 
@@ -641,9 +641,9 @@ public class QuoteLineItemController {
             QuoteLineItem qli = new QuoteLineItem();
             qli.Id = quoteLineItemId;
             qli.Rate_Acceptance_Status__c = rateStatus;
-            
+
             update qli;
-    
+
             if(rateStatus == 'Accepted'){
                 //
             }
@@ -676,5 +676,101 @@ public class QuoteLineItemController {
             errorMessageList.add(e.getMessage());
         }
         return errorMessageList;
+    }
+
+    public class BookingWrapper {
+        @AuraEnabled public List<BookingRequest> records;
+    }
+
+    public class BookingRequest {
+        @AuraEnabled public NewBookingInfo NewBookingInfo;
+        @AuraEnabled public String Opt;
+        @AuraEnabled public String RateId;
+        @AuraEnabled public String DateFrom;
+        @AuraEnabled public List<RoomConfigWrapper> RoomConfigs;
+        @AuraEnabled public String SCUQty;
+        @AuraEnabled public String Pickup_Date;
+        @AuraEnabled public String puTime;
+        @AuraEnabled public String puRemark;
+        @AuraEnabled public String Dropoff_Date;
+        @AuraEnabled public String doTime;
+        @AuraEnabled public String doRemark;
+    }
+
+    public class NewBookingInfo {
+        @AuraEnabled public String Name;
+        @AuraEnabled public String QB;
+    }
+
+    public class RoomConfigWrapper {
+        @AuraEnabled public RoomConfig RoomConfig;
+    }
+
+    public class RoomConfig {
+        @AuraEnabled public String RoomType;
+        @AuraEnabled public Integer Adults;
+        @AuraEnabled public Integer Children;
+        @AuraEnabled public List<PaxListWrapper> PaxList;
+    }
+
+    public class PaxListWrapper {
+        @AuraEnabled public PaxDetails PaxDetails;
+    }
+
+    public class PaxDetails {
+        @AuraEnabled public String Title;
+        @AuraEnabled public String Forename;
+        @AuraEnabled public String Surname;
+        @AuraEnabled public String PaxType;
+    }
+
+    @AuraEnabled
+    public static String createBooking(String bookingPayload) {
+        Tourplan_Synatic_Configuration__mdt config = [SELECT Id, DeveloperName, Url_Endpoint__c, Api_Key__c, Booking_Url_Endpoint__c FROM Tourplan_Synatic_Configuration__mdt WHERE DeveloperName = 'Synatic_Tourplan_API' LIMIT 1];
+        String endpoint = config.Booking_Url_Endpoint__c;
+        String payload = JSON.serialize(bookingPayload);
+
+        System.debug('@@Booking Payload: ' + payload);
+        System.debug('@@Booking Endpoint: ' + endpoint);
+
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(endpoint);
+        req.setMethod('POST');
+        req.setHeader('Content-Type', 'application/json');
+        req.setBody(bookingPayload);
+        req.setTimeout(120000);
+
+        Http http = new Http();
+        HTTPResponse res = http.send(req);
+
+        System.debug('@@Booking Response Status: ' + res.getStatus());
+        System.debug('@@Booking Response Body: ' + res.getBody());
+
+        Integer sc = res.getStatusCode();
+        if (sc >= 200 && sc < 300) {
+            return res.getBody();
+        }
+
+        throw new AuraHandledException('Booking creation failed: ' + sc + ' ' + res.getStatus());
+    }
+
+    @AuraEnabled
+    public static string updateLineItem(String quoteLineItemId, String bookingId, String reservationNumber,
+                                        String serviceLineId, String sequenceNumber, String serviceStatus){
+        try {
+            QuoteLineItem qli = [SELECT Id, BookingId__c, Reservation_Number__c, Service_Line_Id__c, Sequence_Number__c, Service_Status__c FROM QuoteLineItem WHERE Id = :quoteLineItemId LIMIT 1];
+            if(qli != null){
+                qli.BookingId__c = bookingId;
+                qli.Reservation_Number__c = reservationNumber;
+                qli.Service_Line_Id__c = serviceLineId;
+                qli.Sequence_Number__c = sequenceNumber;
+                qli.Service_Status__c = serviceStatus;
+                update qli;
+                return 'Success';
+            }
+            return 'No Booking Id found on Quote Line Item';
+        } catch (Exception e) {
+            throw new AuraHandledException(e.getMessage());
+        }
     }
 }
