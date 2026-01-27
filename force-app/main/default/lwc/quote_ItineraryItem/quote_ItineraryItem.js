@@ -315,53 +315,59 @@ export default class quote_ItineraryItem extends LightningElement {
 
         try {
             const result = await GetQLIConfigurations({ quoteLineItemId: this.quoteLineItemId });
-            // console.log("GetQLIConfigurations -> ", result);
+            console.log("GetQLIConfigurations -> ", result);
 
-            result.forEach(config => {
-                const configObj = {
-                    // roomType: config.serviceSubtype == 'DOUBLE AVAIL' ? 'DB' : 'TW',
-                    Adults: parseInt(config.adults),
-                    Children: parseInt(config.children),
-                    Infants: parseInt(config.infants),
-                    // passengers: parseInt(config.passengers)
-                }
-                roomConfigs.push({ "RoomConfig": configObj });
-            });
-
-            const payload = [{
-                Opt: this.selectedSuppiler["externalId"],
-                Info: 'GSI',
-                DateFrom: this.startDate,
-                SCUqty: this.displayDuration,
-                ButtonName: this.selectedServiceType || 'Accommodation',
-                RoomConfigs: roomConfigs,
-                MaximumOptions: 30
-            }];
-
-            // console.log('Search payloads', JSON.stringify({ records: payload }));
-
-            const requestPayload = { records: payload };
-            const body = await getOptions({ reqPayload: JSON.stringify(requestPayload) });
-            const raw = (typeof body === 'string') ? JSON.parse(body) : body;
-
-            // console.log('Search response', JSON.stringify(raw));
-
-            const liveAvailabilityResult = raw.result[0];
-
-            // console.log('liveAvailabilityResult ->', liveAvailabilityResult);
-            // console.log('liveAvailabilityResult ->', JSON.stringify(liveAvailabilityResult));
-
-            if (liveAvailabilityResult.OptStayResults) {
-                this.processAvailabilityResults(liveAvailabilityResult);
+            if (!result || result.length === 0) {
+                this.showToast('Error', 'No room configurations found for the selected Hotel.', 'error');
             } else {
-                this.showToast('Error', 'No availability found for the selected Hotel.', 'error');
-                this.isOpenBookNowModal = false;
+                result.forEach(config => {
+                    const configObj = {
+                        // roomType: config.serviceSubtype == 'DOUBLE AVAIL' ? 'DB' : 'TW',
+                        Adults: parseInt(config.adults),
+                        Children: parseInt(config.children),
+                        Infants: parseInt(config.infants),
+                        // passengers: parseInt(config.passengers)
+                    }
+                    roomConfigs.push({ "RoomConfig": configObj });
+                });
+
+                const payload = [{
+                    Opt: this.selectedSuppiler["externalId"],
+                    Info: 'GSI',
+                    DateFrom: this.startDate,
+                    SCUqty: this.displayDuration,
+                    ButtonName: this.selectedServiceType || 'Accommodation',
+                    RoomConfigs: roomConfigs,
+                    MaximumOptions: 30
+                }];
+
+                // console.log('Search payloads', JSON.stringify({ records: payload }));
+
+                const requestPayload = { records: payload };
+                const body = await getOptions({ reqPayload: JSON.stringify(requestPayload) });
+                const raw = (typeof body === 'string') ? JSON.parse(body) : body;
+
+                // console.log('Search response', JSON.stringify(raw));
+
+                const liveAvailabilityResult = raw.result[0];
+
+                // console.log('liveAvailabilityResult ->', liveAvailabilityResult);
+                // console.log('liveAvailabilityResult ->', JSON.stringify(liveAvailabilityResult));
+
+                if (liveAvailabilityResult.OptStayResults) {
+                    this.processAvailabilityResults(liveAvailabilityResult);
+                } else {
+                    this.showToast('Error', 'No availability found for the selected Hotel.', 'error');
+                    this.isOpenBookNowModal = false;
+                    this.bookNowModalOpened = false;
+                }
             }
 
         } catch (error) {
             console.error('GetQLIConfigurations>>Error>>>::', JSON.stringify(error));
             this.showToast('Error', 'Failed to fetch availability. Please try again.', 'error');
             this.isOpenBookNowModal = false;
+            this.bookNowModalOpened = false;
         } finally {
             this.isLoading = false;
         }
@@ -462,7 +468,7 @@ export default class quote_ItineraryItem extends LightningElement {
                         reservationNumber: jsonResponse.result[0].Ref,
                         serviceLineId: jsonResponse.result[0].ServiceLineId,
                         sequenceNumber: jsonResponse.result[0].SequenceNumber,
-                        serviceStatus: jsonResponse.result[0].Status === 'OK' ? 'Confirmed' : 'Not Booked'
+                        serviceStatus: jsonResponse.result[0].Status === 'OK' ? 'Provisionally Booked' : 'Not Booked'
                     });
 
                     if (result === 'Success') {
