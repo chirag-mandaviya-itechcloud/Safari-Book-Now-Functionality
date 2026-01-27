@@ -301,13 +301,12 @@ export default class quote_ItineraryItem extends LightningElement {
         this.isLoading = true;
         this.availableOptions = [];
         this.onRequestOptions = [];
-        console.log('handleBookNow-----------');
-        console.log('selectedSuppiler > externalId -> ' + this.selectedSuppiler["externalId"]);
-        console.log('startDate -> ' + this.startDate);
-        console.log('displayDuration -> ' + this.displayDuration);
-        console.log('selectedServiceType -> ' + this.selectedServiceType);
-        console.log('Room Quantity -> ' + this.quantity);
-        console.log('passengers -> ' + JSON.stringify(this.passengers));
+        // console.log('selectedSuppiler > externalId -> ' + this.selectedSuppiler["externalId"]);
+        // console.log('startDate -> ' + this.startDate);
+        // console.log('displayDuration -> ' + this.displayDuration);
+        // console.log('selectedServiceType -> ' + this.selectedServiceType);
+        // console.log('Room Quantity -> ' + this.quantity);
+        // console.log('passengers -> ' + JSON.stringify(this.passengers));
         // console.log("Quote Data -> ", this.quoteData);
         // console.log("Quote Line Item Detail -> ", this.quoteLineItemDetail);
         // const nameForPass = this.quoteLineItemDetail.Id + '-' + this.quoteLineItemDetail.Name__c;
@@ -316,7 +315,7 @@ export default class quote_ItineraryItem extends LightningElement {
 
         try {
             const result = await GetQLIConfigurations({ quoteLineItemId: this.quoteLineItemId });
-            console.log("GetQLIConfigurations -> ", result);
+            // console.log("GetQLIConfigurations -> ", result);
 
             result.forEach(config => {
                 const configObj = {
@@ -339,18 +338,18 @@ export default class quote_ItineraryItem extends LightningElement {
                 MaximumOptions: 30
             }];
 
-            console.log('Search payloads', JSON.stringify({ records: payload }));
+            // console.log('Search payloads', JSON.stringify({ records: payload }));
 
             const requestPayload = { records: payload };
             const body = await getOptions({ reqPayload: JSON.stringify(requestPayload) });
             const raw = (typeof body === 'string') ? JSON.parse(body) : body;
 
-            console.log('Search response', JSON.stringify(raw));
+            // console.log('Search response', JSON.stringify(raw));
 
             const liveAvailabilityResult = raw.result[0];
 
-            console.log('liveAvailabilityResult ->', liveAvailabilityResult);
-            console.log('liveAvailabilityResult ->', JSON.stringify(liveAvailabilityResult));
+            // console.log('liveAvailabilityResult ->', liveAvailabilityResult);
+            // console.log('liveAvailabilityResult ->', JSON.stringify(liveAvailabilityResult));
 
             if (liveAvailabilityResult.OptStayResults) {
                 this.processAvailabilityResults(liveAvailabilityResult);
@@ -360,7 +359,7 @@ export default class quote_ItineraryItem extends LightningElement {
             }
 
         } catch (error) {
-            console.log('GetQLIConfigurations>>Error>>>::', JSON.stringify(error));
+            console.error('GetQLIConfigurations>>Error>>>::', JSON.stringify(error));
             this.showToast('Error', 'Failed to fetch availability. Please try again.', 'error');
             this.isOpenBookNowModal = false;
         } finally {
@@ -371,7 +370,7 @@ export default class quote_ItineraryItem extends LightningElement {
     processAvailabilityResults(result) {
         try {
             const stayResults = Array.isArray(result.OptStayResults) ? result.OptStayResults : [result.OptStayResults];
-            console.log('stayResults ->', JSON.stringify(stayResults));
+            // console.log('stayResults ->', JSON.stringify(stayResults));
             const opt = result.Opt;
 
             stayResults.forEach((option, index) => {
@@ -403,10 +402,10 @@ export default class quote_ItineraryItem extends LightningElement {
                 }
             });
 
-            console.log('Available Options:', JSON.stringify(this.availableOptions));
-            console.log('On Request Options:', JSON.stringify(this.onRequestOptions));
+            // console.log('Available Options:', JSON.stringify(this.availableOptions));
+            // console.log('On Request Options:', JSON.stringify(this.onRequestOptions));
         } catch (error) {
-            console.log('processAvailabilityResults>>Error>>>::', JSON.stringify(error));
+            console.error('processAvailabilityResults>>Error>>>::', JSON.stringify(error));
             this.showToast('Error', 'Error processing availability results.', 'error');
         }
     }
@@ -424,13 +423,13 @@ export default class quote_ItineraryItem extends LightningElement {
         try {
             const optionType = event.target.dataset.optionType;
             const optionOpt = event.target.dataset.optionOpt;
-            console.log('Selected Option Type  ->', optionType);
-            console.log('Selected Option Opt ->', optionOpt);
+            // console.log('Selected Option Type  ->', optionType);
+            // console.log('Selected Option Opt ->', optionOpt);
 
             if (optionType === 'available') {
                 this.booking = true;
                 this.selectedBookingOption = this.onRequestOptions.find(option => option.opt === optionOpt);
-                console.log('Selected Booking Option:', JSON.stringify(this.selectedBookingOption));
+                // console.log('Selected Booking Option:', JSON.stringify(this.selectedBookingOption));
                 const bookingRoomConfigs = await this.buildBookingRoomConfigs();
                 const nameForPass = this.quoteLineItemDetail.Id + '-' + this.quoteLineItemDetail.Name__c;
                 const payload = [{
@@ -450,10 +449,10 @@ export default class quote_ItineraryItem extends LightningElement {
                     doTime: this.endTime || "1700",
                     doRemark: `Transfer to ${this.endLocation || 'TBD'}`
                 }];
-                console.log('Booking Payload Stringified:', JSON.stringify({ records: payload }));
+                // console.log('Booking Payload Stringified:', JSON.stringify({ records: payload }));
                 const bookingResponse = await createBooking({ bookingPayload: JSON.stringify({ records: payload }) });
 
-                console.log('Booking Response:', JSON.parse(bookingResponse));
+                // console.log('Booking Response:', JSON.parse(bookingResponse));
                 const jsonResponse = (typeof bookingResponse === 'string') ? JSON.parse(bookingResponse) : bookingResponse;
 
                 if (jsonResponse.result.length > 0 && jsonResponse.result[0].Status === 'OK') {
@@ -476,12 +475,12 @@ export default class quote_ItineraryItem extends LightningElement {
                 }
             } else if (optionType === 'onrequest') {
                 this.selectedBookingOption = this.onRequestOptions.find(option => option.opt === optionOpt);
-                console.log('Selected On Request Option:', JSON.stringify(this.selectedBookingOption));
+                // console.log('Selected On Request Option:', JSON.stringify(this.selectedBookingOption));
                 this.openEmailModal = true;
                 this.isOpenBookNowModal = false;
             }
         } catch (error) {
-            console.log('handleBookOption>>Error>>>::', JSON.stringify(error));
+            console.error('handleBookOption>>Error>>>::', JSON.stringify(error));
             this.showToast('Error', 'Failed to prepare booking request.', 'error');
 
         } finally {
@@ -508,11 +507,11 @@ export default class quote_ItineraryItem extends LightningElement {
                 p.Passenger && p.Passenger.PassengerType__c === 'Child'
             );
 
-            console.log('Adults count:', adultPassengers.length);
-            console.log('Children count:', childPassengers.length);
+            // console.log('Adults count:', adultPassengers.length);
+            // console.log('Children count:', childPassengers.length);
 
             const result = await GetQLIConfigurations({ quoteLineItemId: this.quoteLineItemId });
-            console.log("GetQLIConfigurations -> ", result);
+            // console.log("GetQLIConfigurations -> ", result);
 
             let adultIndex = 0;
             let childIndex = 0;
@@ -525,7 +524,7 @@ export default class quote_ItineraryItem extends LightningElement {
                 const adultsInRoom = parseInt(config.adults) || 0;
                 const childrenInRoom = parseInt(config.children) || 0;
                 const infantsInRoom = parseInt(config.infants) || 0;
-                console.log(`Room ${index + 1}: Adults=${adultsInRoom}, Children=${childrenInRoom}, Infants=${infantsInRoom}`);
+                // console.log(`Room ${index + 1}: Adults=${adultsInRoom}, Children=${childrenInRoom}, Infants=${infantsInRoom}`);
 
                 const roomPaxList = [];
 
@@ -567,7 +566,7 @@ export default class quote_ItineraryItem extends LightningElement {
                     PaxList: roomPaxList
                 }
 
-                console.log(`Room ${index + 1} Config:`, JSON.stringify(roomConfig));
+                // console.log(`Room ${index + 1} Config:`, JSON.stringify(roomConfig));
                 roomConfigs.push({ "RoomConfig": roomConfig });
             });
 
@@ -575,7 +574,7 @@ export default class quote_ItineraryItem extends LightningElement {
                 console.warn(`Warning: Not all passengers assigned. Adults: ${adultIndex}/${adultPassengers.length}, Children: ${childIndex}/${childPassengers.length}`);
             }
         } catch (error) {
-            console.log('buildRoomConfigs>>Error:', JSON.stringify(error));
+            console.error('buildRoomConfigs>>Error:', JSON.stringify(error));
         }
 
         return roomConfigs;
